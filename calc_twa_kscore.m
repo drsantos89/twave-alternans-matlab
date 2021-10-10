@@ -1,10 +1,10 @@
-function calc_t_wave_alternans_k_score_method(signal, plot_figs=true)
+function k_score = calc_t_wave_alternans_k_score_method(signal_path, plot_figs=true)
 % this function calculates T-wave alternans (TWA) magnitude based on the
 % spectral method (K-score)
 
 %%% load signal
 disp('loading signal ...')
-[signal_raw,Fs,tm] = rdsamp(signal);
+[signal_raw,Fs,tm] = rdsamp(signal_path);
 num_signals = size(signal_raw,2);
 
 %%% filter signal
@@ -15,8 +15,8 @@ signal_filt = filtfilt(sos, g, signal_raw);
 
 %%% beat detection
 disp('detecting beats ...')
-gqrs(signal);
-qrs = rdann(signal,'qrs');
+gqrs(signal_path);
+qrs = rdann(signal_path,'qrs');
 
 figure;
 for i = 1:num_signals

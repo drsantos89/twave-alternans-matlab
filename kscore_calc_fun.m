@@ -9,7 +9,7 @@ for chan = 1:size(tw_vector,3)
         temp = diff(tw_magnitudes);
     end
     
-    F = [0:size(temp,1)-1]/size(temp,1)
+    F = [0:size(temp,1)-1]/size(temp,1);
     F = interp1([0:size(temp,1)-1]',F,...
         [0:size(temp,1)/512:size(temp,1)-1]');
     %F = [0:size(temp,1)-1]/size(temp,1)*(1/(size(tw_magnitudes,1)/512));
