@@ -2,37 +2,71 @@ function calc_t_wave_alternans_k_score_method(signal, plot_figs=true)
 % this function calculates T-wave alternans (TWA) magnitude based on the
 % spectral method (K-score)
 
-%%% detect beats
-[signal_raw,Fs,tm] = rdsamp(signal)
+%%% load signal
+disp('loading signal ...')
+[signal_raw,Fs,tm] = rdsamp(signal);
+num_signals = size(signal_raw,2);
 
-%%% Beat detection
+%%% filter signal
+disp('filtering signal ...')
+[z,p,k] = butter(3, [0.5 40]/(Fs/2), 'bandpass');
+[sos,g] = zp2sos(z,p,k);
+signal_filt = filtfilt(sos, g, signal_raw);
+
+%%% beat detection
+disp('detecting beats ...')
 gqrs(signal);
 qrs = rdann(signal,'qrs');
 
-%%% build beat vector
-[beat_vector] = beat_vector_fun(signal_raw, qrs, Fs);
-
-%%% correct baseline
-beat_vector_corr = baseline_correction_fun(signal_raw_no_spikes, spikes, Fs, CL, beat_vector, method);
-baseline_correction_fig(beat_vector, beat_vector_corr, protocol, raw, filter, correlation, method, channels, name)
-
-%%% calculate median beats
-[beat_median, beat_median_odd, beat_median_even] = beat_median_fun(beat_vector_corr);
-
-%%% replace low correlation beats
-beat_vector_corr_temp = beat_vector_corr;
-[beat_vector_corr, b] = beat_correlation_fun(signal_raw_no_spikes, spikes, beat_vector_corr, beat_median_odd, beat_median_even, Fs);
-beat_correlation_fig(beat_vector_corr, beat_vector_corr_temp, beat_median_odd, beat_median_even, b, protocol, raw, filter, correlation, method, channels, name)
-
-for j = 1:size(signal_raw_no_spikes,2)
-    precentage_abnormal_beat(p,j) = sum(b(:,j))/length(spikes)*100;
+figure;
+for i = 1:num_signals
+    subplot(num_signals,1,i);
+    plot(1/Fs:1/Fs:length(signal_filt)/Fs, signal_filt(:,i));
+    hold on
+    plot(qrs/Fs, signal_filt(qrs,i), 'rx')
 end
 
+%%% build beat vector
+disp('bulding beat vector ...')
+[beat_vector, beat_median, beat_median_odd, beat_median_even] = beat_vector_fun(signal_filt, qrs, Fs);
+if plot_figs
+    beat_vector_fig(beat_vector, beat_median, beat_median_odd, beat_median_even)
+end
+
+%%% correct baseline
+disp('correcting baseline ...')
+beat_vector_corr = baseline_correction_fun(beat_vector);
+[beat_median, beat_median_odd, beat_median_even] = beat_median_fun(beat_vector_corr);
+if plot_figs==true
+    beat_vector_fig(beat_vector_corr, beat_median, beat_median_odd, beat_median_even)
+end
+
+%%% replace low correlation beats
+disp('replacing low correlation beats ...')
+beat_vector_corr_temp = beat_vector_corr;
+[beat_vector_corr, b] = beat_correlation_fun(signal_filt, qrs, beat_vector_corr, beat_median_odd, beat_median_even, Fs);
+if plot_figs==true
+    beat_vector_fig(beat_vector_corr, beat_median, beat_median_odd, beat_median_even)
+end
+
+for j = 1:num_signals
+    precentage_abnormal_beat(j) = sum(b(:,j))/length(qrs)*100;
+end
+disp('abnormal beat percentage :')
+disp(precentage_abnormal_beat)
+
 %%% build t_wave vector
-[tw_vector] = t_wave_vector_fun(signal_raw_no_spikes, spikes, beat_vector_corr, tw_low_wind, tw_length);
+disp('building t wave vector ...')
+tw_low_wind = 0.3*Fs;
+tw_length = 0.2*Fs;
+[tw_vector] = t_wave_vector_fun(beat_vector_corr, tw_low_wind, tw_length);
+if plot_figs==true
+    t_wave_vector_fig(tw_vector)
+end
 
 %%% calculate K-score
+disp('calculating K-score ...')
 tw_vector = tw_vector./repmat(sqrt(nanmean(tw_vector(:,:,:).^2)),[size(tw_vector,1),1]);
-[k_score] = kscore_calc_fun(channels, tw_vector, protocol, raw, filter, correlation, method, name, dodetrend);
+k_score = kscore_calc_fun(tw_vector, 2);
 
 end

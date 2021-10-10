@@ -1,0 +1,22 @@
+function beat_vector_fig(beat_vector, beat_median)
+
+    figure('Position',get(0,'ScreenSize'))
+    hold on
+    
+    for i = 1:num_signals
+        subplot(num_signals,4,1+((i-1)*4));
+        refline(0,0)
+        plot(beat_vector(:,:,i));
+        subplot(num_signals,4,2+((i-1)*4));
+        refline(0,0)
+        plot(beat_median(:,i));
+        subplot(num_signals,4,3+((i-1)*4));
+        refline(0,0)
+        plot(beat_median_odd(:,i));
+        subplot(num_signals,4,4+((i-1)*4));
+        refline(0,0)
+        plot(beat_median_even(:,i));
+    end
+
+end
+

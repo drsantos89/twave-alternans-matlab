@@ -1,8 +1,10 @@
-function [beat_vector, beat_median, beat_median_odd, beat_median_even] = beat_vector(signal, spikes, CL)
+function [beat_vector, beat_median, beat_median_odd, beat_median_even] = beat_vector(signal, qrs, Fs)
 
-for i = 1:length(spikes)
+for i = 1:length(qrs)
     for j = 1:size(signal,2)
-        beat_vector(:,i,j) = signal(spikes(i):spikes(i)+CL,j);
+        if qrs(i)+0.4*Fs < size(signal,1)
+            beat_vector(:,i,j) = signal(qrs(i)-0.1*Fs:qrs(i)+0.4*Fs,j);
+        end
     end
 end
 
